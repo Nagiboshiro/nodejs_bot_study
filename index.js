@@ -6,16 +6,6 @@ const UserModel = require('./models.js')
 const token = '5637780995:AAEoVwrykoU-Xj1dhhEf9URHdJ3mi4EjyM8'
 const bot = new TelegramApi(token, {polling: true})
 
-const chats = {}
-
-
-const startGame = async (chatId) => {
-    await bot.sendMessage(chatId, `Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!`)
-    const randomNumber = Math.floor(Math.random() * 10)
-    chats[chatId] = randomNumber
-
-    await bot.sendMessage(chatId, 'Отгадывай', gameOptions)
-}
 
 const start = async () => {
 
@@ -26,10 +16,12 @@ const start = async () => {
         console.log("Подключение к БД сломалость", e)
     }
 
-    bot.setMyCommands([{command: '/start', description: 'Начальное приветствие'}, {
-        command: '/info',
-        description: 'Получить информацию о пользователе'
-    }, {command: '/game', description: 'Игра угадай цифру'},])
+    bot.setMyCommands([
+        {command: '/start', description: 'Начальное приветствие'},
+        {command: '/info', description: 'Получить информацию о пользователе'},
+        {command: '/game', description: 'Игра угадай цифру'},
+        {command: '/test', description: 'test'},
+    ])
 
     bot.on('message', async msg => {
         const text = msg.text
@@ -37,14 +29,29 @@ const start = async () => {
 
         try {
             if (text === '/game') {
-                return startGame(chatId)
+                await bot.sendMessage(chatId, `Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!`)
+
+                return bot.sendMessage(chatId, 'Отгадывай', gameOptions)
+            }
+
+            if (text === '/test') {
+                console.log(chatId)
+                const user = await UserModel.findAll({
+                    where: {
+                        chatId: `${chatId}`
+                    }
+                })
+
+                return bot.sendMessage(chatId, `All users : ${JSON.stringify(user, null, 2)}`)
             }
 
             if (text === '/start') {
                 await UserModel.create({chatId})
+
                 await bot.sendAnimation(chatId, 'https://tlgrm.eu/_/stickers/b0d/85f/b0d85fbf-de1b-4aaf-836c-1cddaa16e002/1.webp')
                 return bot.sendMessage(chatId, 'Добро пожаловать в сообщество программистов!')
             }
+
 
             if (text === '/info') {
                 const user = await UserModel.findOne({chatId})
@@ -62,21 +69,34 @@ const start = async () => {
     bot.on('callback_query', async msg => {
         const data = msg.data
         const chatId = msg.message.chat.id
-        if (data === '/again') {
-            return startGame(chatId)
-        }
-        const user = await UserModel.findOne({chatId})
+        console.log(chatId)
 
-        if (data == chats[chatId]) {
+        const randomNumber = Math.floor(Math.random() * 10)
+
+
+        const user = await UserModel.findOne({
+            where: {
+                chatId: `${chatId}`
+            }
+        })
+
+        console.log(`e users : ${JSON.stringify(user, null, 2)}`)
+
+        if (data === '/again') {
+            await bot.sendMessage(chatId, `Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!`)
+
+            return bot.sendMessage(chatId, 'Отгадывай', gameOptions)
+        }
+
+        if (data == randomNumber) {
             user.right += 1
-            await bot.sendMessage(chatId, `Поздравляю, ты угадал цифру ${chats[chatId]}`, againOptions)
+            await bot.sendMessage(chatId, `Поздравляю, ты угадал цифру ${randomNumber}`, againOptions)
         } else {
             user.wrong += 1
-            await bot.sendMessage(chatId, `К сожалению ты даун, я загадал цифру ${chats[chatId]}`, againOptions)
+            await bot.sendMessage(chatId, `К сожалению ты даун, я загадал цифру ${randomNumber}`, againOptions)
         }
 
         await user.save()
-
     })
 }
 
