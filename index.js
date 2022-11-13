@@ -46,7 +46,16 @@ const start = async () => {
             }
 
             if (text === '/start') {
-                await UserModel.create({chatId})
+
+                const user = await UserModel.findOne({
+                    where: {
+                        chatId: `${chatId}`
+                    }
+                })
+
+                if (!user) {
+                    await UserModel.create({chatId})
+                }
 
                 await bot.sendAnimation(chatId, 'https://tlgrm.eu/_/stickers/b0d/85f/b0d85fbf-de1b-4aaf-836c-1cddaa16e002/1.webp')
                 return bot.sendMessage(chatId, 'Добро пожаловать в сообщество программистов!')
