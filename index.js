@@ -54,7 +54,11 @@ const start = async () => {
 
 
             if (text === '/info') {
-                const user = await UserModel.findOne({chatId})
+                const user = await UserModel.findOne({
+                    where: {
+                        chatId: `${chatId}`
+                    }
+                })
                 return bot.sendMessage(chatId, `Тебя зовут ${msg.from.first_name} ${msg.from.last_name}, в игре у тебя правильных ответов ${user.right}, неправильных ${user.wrong}`)
             }
 
@@ -69,18 +73,14 @@ const start = async () => {
     bot.on('callback_query', async msg => {
         const data = msg.data
         const chatId = msg.message.chat.id
-        console.log(chatId)
 
         const randomNumber = Math.floor(Math.random() * 10)
-
 
         const user = await UserModel.findOne({
             where: {
                 chatId: `${chatId}`
             }
         })
-
-        console.log(`e users : ${JSON.stringify(user, null, 2)}`)
 
         if (data === '/again') {
             await bot.sendMessage(chatId, `Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!`)
