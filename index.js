@@ -20,7 +20,6 @@ const start = async () => {
         {command: '/start', description: 'Начальное приветствие'},
         {command: '/info', description: 'Получить информацию о пользователе'},
         {command: '/game', description: 'Игра угадай цифру'},
-        {command: '/test', description: 'test'},
     ])
 
     bot.on('message', async msg => {
@@ -32,17 +31,6 @@ const start = async () => {
                 await bot.sendMessage(chatId, `Сейчас я загадаю цифру от 0 до 9, а ты должен ее угадать!`)
 
                 return bot.sendMessage(chatId, 'Отгадывай', gameOptions)
-            }
-
-            if (text === '/test') {
-                console.log(chatId)
-                const user = await UserModel.findAll({
-                    where: {
-                        chatId: `${chatId}`
-                    }
-                })
-
-                return bot.sendMessage(chatId, `All users : ${JSON.stringify(user, null, 2)}`)
             }
 
             if (text === '/start') {
